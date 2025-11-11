@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Biblioteca</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📚 Minha Biblioteca</h1>
+      <div class="user-info">
+        <span class="user-name" id="nomeUsuario"></span>
+        <button class="nav-btn logout" onclick="logout()">Sair</button>
+      </div>
+    </div>
+    
+    <div class="nav">
+      <a href="dashboard.html" class="nav-btn">Dashboard</a>
+      <a href="livros.html" class="nav-btn">Gerenciar Livros</a>
+      <a href="favoritos.html" class="nav-btn">Meus Favoritos</a>
+    </div>
+    
+    <h2>Estatísticas</h2>
+    <div class="stats-grid" id="stats"></div>
+    
+    <h2>Últimos Livros Adicionados</h2>
+    <div class="books-grid" id="livros-recentes"></div>
+  </div>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

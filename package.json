@@ -1,0 +1,18 @@
+{
+  "name": "crud-livros-expandido",
+  "version": "2.0.0",
+  "description": "Sistema completo de gerenciamento de livros com autenticação",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "Bruno Figueiredo - Mestre QA",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "swagger-ui-express": "^5.0.0",
+    "swagger-jsdoc": "^6.2.8"
+  }
+}

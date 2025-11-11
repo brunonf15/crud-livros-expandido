@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRUD de Livros</title>
+  <style>
+    /* Estilos Globais */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f2f2f2;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Container centralizado */
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    
+    /* Títulos */
+    h1, h2 {
+      text-align: center;
+      color: #444;
+    }
+    
+    /* Formulários e botões */
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    input[type="text"],
+    input[type="number"] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    
+    button {
+      padding: 10px;
+      background-color: #007BFF;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    
+    button:hover {
+      background-color: #0056b3;
+    }
+    
+    /* Lista de livros */
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    ul li {
+      background: #e9ecef;
+      margin-bottom: 8px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    
+    /* Formulário de busca */
+    .form-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
+    .form-group input {
+      flex: 1;
+      max-width: 200px;
+    }
+    
+    /* Mensagem de retorno */
+    #livro-encontrado {
+      text-align: center;
+      padding: 10px;
+      background-color: #ffc107;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Gerenciamento de Livros</h1>
+
+    <!-- Formulário para adicionar livro -->
+    <h2>Adicionar Livro</h2>
+    <form id="form-adicionar">
+      <input type="text" id="nome" placeholder="Nome" required>
+      <input type="text" id="autor" placeholder="Autor" required>
+      <input type="number" id="paginas" placeholder="Páginas" required>
+      <button type="submit">Adicionar</button>
+    </form>
+
+    <!-- Botão para listar todos os livros -->
+    <h2>Lista de Livros</h2>
+    <button id="btn-listar">Listar Todos os Livros</button>
+    <ul id="lista-livros"></ul>
+
+    <!-- Formulário para buscar um livro específico -->
+    <h2>Buscar Livro por ID</h2>
+    <div class="form-group">
+      <input type="number" id="id-buscar" placeholder="ID do Livro">
+      <button id="btn-buscar">Buscar</button>
+    </div>
+    <div id="livro-encontrado"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
