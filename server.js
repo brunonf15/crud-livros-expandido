@@ -437,6 +437,6 @@ app.delete('/favoritos', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+  console.log(`Servidor rodando em http://localhost:${PORT}/login.html`);
   console.log(`Documentação Swagger: http://localhost:${PORT}/api-docs`);
 });
