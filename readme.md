@@ -196,23 +196,6 @@ O sistema já vem com dados pré-cadastrados para facilitar os testes:
 1. Clean Code - Robert C. Martin (464 páginas)
 2. Harry Potter - J.K. Rowling (309 páginas)
 
-## 🤝 Contribuindo
-
-Contribuições são bem-vindas! Siga os passos abaixo:
-
-1. Faça um Fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona MinhaFeature'`)
-4. Push para a branch (`git push origin feature/MinhaFeature`)
-5. Abra um Pull Request
-
-### Padrões de Código
-
-- Use indentação de 2 espaços
-- Siga o padrão de nomenclatura consistente
-- Comente código complexo
-- Teste suas alterações localmente antes de submeter
-
 ## 📝 Licença
 
 Este projeto é de código aberto e está disponível para fins educacionais.
@@ -221,19 +204,7 @@ Este projeto é de código aberto e está disponível para fins educacionais.
 
 **Bruno Figueiredo**
 - GitHub: [@brunonf15](https://github.com/brunonf15)
-- LinkedIn: [Bruno Figueiredo](https://www.linkedin.com/in/bruno-figueiredo/)
-
-## 🙏 Agradecimentos
-
-- Comunidade Node.js e Express
-- Swagger pela documentação interativa
-- Todos os contribuidores e testadores
-
-## 📚 Recursos Adicionais
-
-- [Documentação do Express](https://expressjs.com/)
-- [Documentação do Node.js](https://nodejs.org/docs/)
-- [Swagger Editor](https://editor.swagger.io/)
+- LinkedIn: [Bruno Figueiredo](https://www.linkedin.com/in/brunonascimento15/)
 
 ***
 
