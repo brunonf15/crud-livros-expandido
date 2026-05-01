@@ -12,6 +12,16 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+app.use((req, res, next) => {
+  if (/\.(html|js)$/.test(req.path) || req.path === '/' || !req.path.includes('.')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  next();
+});
+
 app.use(express.static('public'));
 
 const LIVRO_COLUMNS = `id, nome, autor, paginas, descricao,
@@ -26,7 +36,7 @@ const swaggerOptions = {
       version: '2.0.0',
       description: 'API completa para gerenciamento de biblioteca com autenticação'
     },
-    servers: [{ url: `http://localhost:${PORT}` }]
+    servers: [{ url: '/' }]
   },
   apis: ['./server.js']
 };
