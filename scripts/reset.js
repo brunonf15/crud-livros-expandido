@@ -21,13 +21,14 @@ async function resetDatabase() {
     await conn.query('SET FOREIGN_KEY_CHECKS = 0');
     await conn.query('TRUNCATE TABLE favoritos');
     await conn.query('TRUNCATE TABLE livros');
-    await conn.query('TRUNCATE TABLE usuarios');
     await conn.query('SET FOREIGN_KEY_CHECKS = 1');
 
     await conn.query(
-      'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)',
+      `INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE senha = VALUES(senha)`,
       ['Admin', 'admin@biblioteca.com', ADMIN_HASH]
     );
+
     await conn.query(
       'INSERT INTO livros (nome, autor, paginas, descricao, imagem_url) VALUES (?, ?, ?, ?, ?)',
       [
