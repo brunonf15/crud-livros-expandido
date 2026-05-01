@@ -1,46 +1,20 @@
 const express = require('express');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+const pool = require('./db');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// "Banco de dados" em memória
-let usuarios = [
-  { id: 1, nome: 'Admin', email: 'admin@biblioteca.com', senha: '123456' }
-];
-
-let livros = [
-  { 
-    id: 1, 
-    nome: 'Clean Code', 
-    autor: 'Robert C. Martin', 
-    paginas: 464,
-    descricao: 'Um guia completo sobre boas práticas de programação',
-    imagemUrl: 'https://images-na.ssl-images-amazon.com/images/I/41xShlnTZTL._SX376_BO1,204,203,200_.jpg',
-    dataCadastro: new Date().toISOString()
-  },
-  { 
-    id: 2, 
-    nome: 'Harry Potter', 
-    autor: 'J.K. Rowling', 
-    paginas: 309,
-    descricao: 'O primeiro livro da saga do bruxinho mais famoso',
-    imagemUrl: 'https://m.media-amazon.com/images/I/81ibfYk4qmL._SY466_.jpg',
-    dataCadastro: new Date().toISOString()
-  }
-];
-
-let favoritos = []; // { usuarioId, livroId }
-
-let proximoIdUsuario = 2;
-let proximoIdLivro = 3;
+const LIVRO_COLUMNS = `id, nome, autor, paginas, descricao,
+  imagem_url AS imagemUrl, data_cadastro AS dataCadastro`;
 
 // Configuração Swagger
 const swaggerOptions = {
@@ -85,30 +59,26 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  *       400:
  *         description: Email já cadastrado
  */
-app.post('/registro', (req, res) => {
-  const { nome, email, senha } = req.body;
-  
-  // Verifica se email já existe
-  const usuarioExistente = usuarios.find(u => u.email === email);
-  if (usuarioExistente) {
-    return res.status(400).json({ mensagem: 'Email já cadastrado' });
+app.post('/registro', async (req, res, next) => {
+  try {
+    const { nome, email, senha } = req.body;
+    const hash = await bcrypt.hash(senha, 10);
+
+    const [result] = await pool.query(
+      'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)',
+      [nome, email, hash]
+    );
+
+    res.status(201).json({
+      mensagem: 'Usuário criado com sucesso',
+      usuario: { id: result.insertId, nome, email }
+    });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ mensagem: 'Email já cadastrado' });
+    }
+    next(err);
   }
-  
-  const novoUsuario = {
-    id: proximoIdUsuario++,
-    nome,
-    email,
-    senha
-  };
-  
-  usuarios.push(novoUsuario);
-  
-  // Retorna usuário sem a senha
-  const { senha: _, ...usuarioSemSenha } = novoUsuario;
-  res.status(201).json({
-    mensagem: 'Usuário criado com sucesso',
-    usuario: usuarioSemSenha
-  });
 });
 
 /**
@@ -133,21 +103,27 @@ app.post('/registro', (req, res) => {
  *       401:
  *         description: Credenciais inválidas
  */
-app.post('/login', (req, res) => {
-  const { email, senha } = req.body;
-  
-  const usuario = usuarios.find(u => u.email === email && u.senha === senha);
-  
-  if (!usuario) {
-    return res.status(401).json({ mensagem: 'Email ou senha incorretos' });
+app.post('/login', async (req, res, next) => {
+  try {
+    const { email, senha } = req.body;
+
+    const [rows] = await pool.query(
+      'SELECT id, nome, email, senha FROM usuarios WHERE email = ?',
+      [email]
+    );
+
+    const usuario = rows[0];
+    if (!usuario || !(await bcrypt.compare(senha, usuario.senha))) {
+      return res.status(401).json({ mensagem: 'Email ou senha incorretos' });
+    }
+
+    res.json({
+      mensagem: 'Login realizado com sucesso',
+      usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email }
+    });
+  } catch (err) {
+    next(err);
   }
-  
-  // Retorna usuário sem a senha
-  const { senha: _, ...usuarioSemSenha } = usuario;
-  res.json({
-    mensagem: 'Login realizado com sucesso',
-    usuario: usuarioSemSenha
-  });
 });
 
 // ==================== ROTAS DE LIVROS ====================
@@ -161,8 +137,33 @@ app.post('/login', (req, res) => {
  *       200:
  *         description: Lista de livros retornada com sucesso
  */
-app.get('/livros', (req, res) => {
-  res.json(livros);
+app.get('/livros', async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(`SELECT ${LIVRO_COLUMNS} FROM livros`);
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * @swagger
+ * /livros/recentes/ultimos:
+ *   get:
+ *     summary: Retorna os 5 últimos livros cadastrados
+ *     responses:
+ *       200:
+ *         description: Lista dos livros mais recentes
+ */
+app.get('/livros/recentes/ultimos', async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT ${LIVRO_COLUMNS} FROM livros ORDER BY data_cadastro DESC, id DESC LIMIT 5`
+    );
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
@@ -182,12 +183,19 @@ app.get('/livros', (req, res) => {
  *       404:
  *         description: Livro não encontrado
  */
-app.get('/livros/:id', (req, res) => {
-  const livro = livros.find(l => l.id === parseInt(req.params.id));
-  if (!livro) {
-    return res.status(404).json({ mensagem: 'Livro não encontrado' });
+app.get('/livros/:id', async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT ${LIVRO_COLUMNS} FROM livros WHERE id = ?`,
+      [parseInt(req.params.id)]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ mensagem: 'Livro não encontrado' });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    next(err);
   }
-  res.json(livro);
 });
 
 /**
@@ -216,21 +224,30 @@ app.get('/livros/:id', (req, res) => {
  *       201:
  *         description: Livro adicionado com sucesso
  */
-app.post('/livros', (req, res) => {
-  const { nome, autor, paginas, descricao, imagemUrl } = req.body;
-  
-  const novoLivro = {
-    id: proximoIdLivro++,
-    nome,
-    autor,
-    paginas: parseInt(paginas),
-    descricao: descricao || '',
-    imagemUrl: imagemUrl || 'https://via.placeholder.com/150',
-    dataCadastro: new Date().toISOString()
-  };
-  
-  livros.push(novoLivro);
-  res.status(201).json(novoLivro);
+app.post('/livros', async (req, res, next) => {
+  try {
+    const { nome, autor, paginas, descricao, imagemUrl } = req.body;
+
+    const [result] = await pool.query(
+      `INSERT INTO livros (nome, autor, paginas, descricao, imagem_url)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        nome,
+        autor,
+        parseInt(paginas),
+        descricao || '',
+        imagemUrl || 'https://via.placeholder.com/150'
+      ]
+    );
+
+    const [rows] = await pool.query(
+      `SELECT ${LIVRO_COLUMNS} FROM livros WHERE id = ?`,
+      [result.insertId]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
@@ -256,20 +273,30 @@ app.post('/livros', (req, res) => {
  *       404:
  *         description: Livro não encontrado
  */
-app.put('/livros/:id', (req, res) => {
-  const livro = livros.find(l => l.id === parseInt(req.params.id));
-  if (!livro) {
-    return res.status(404).json({ mensagem: 'Livro não encontrado' });
+app.put('/livros/:id', async (req, res, next) => {
+  try {
+    const { nome, autor, paginas, descricao, imagemUrl } = req.body;
+    const id = parseInt(req.params.id);
+
+    const [result] = await pool.query(
+      `UPDATE livros
+       SET nome = ?, autor = ?, paginas = ?, descricao = ?, imagem_url = ?
+       WHERE id = ?`,
+      [nome, autor, parseInt(paginas), descricao, imagemUrl, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ mensagem: 'Livro não encontrado' });
+    }
+
+    const [rows] = await pool.query(
+      `SELECT ${LIVRO_COLUMNS} FROM livros WHERE id = ?`,
+      [id]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    next(err);
   }
-  
-  const { nome, autor, paginas, descricao, imagemUrl } = req.body;
-  livro.nome = nome;
-  livro.autor = autor;
-  livro.paginas = parseInt(paginas);
-  livro.descricao = descricao;
-  livro.imagemUrl = imagemUrl;
-  
-  res.json(livro);
 });
 
 /**
@@ -289,33 +316,21 @@ app.put('/livros/:id', (req, res) => {
  *       404:
  *         description: Livro não encontrado
  */
-app.delete('/livros/:id', (req, res) => {
-  const index = livros.findIndex(l => l.id === parseInt(req.params.id));
-  if (index === -1) {
-    return res.status(404).json({ mensagem: 'Livro não encontrado' });
+app.delete('/livros/:id', async (req, res, next) => {
+  try {
+    const [result] = await pool.query('DELETE FROM livros WHERE id = ?', [
+      parseInt(req.params.id)
+    ]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ mensagem: 'Livro não encontrado' });
+    }
+    res.json({ mensagem: 'Livro removido com sucesso' });
+  } catch (err) {
+    next(err);
   }
-  
-  livros.splice(index, 1);
-  res.json({ mensagem: 'Livro removido com sucesso' });
 });
 
 // ==================== ROTAS DE ESTATÍSTICAS ====================
-
-/**
- * @swagger
- * /livros/recentes/ultimos:
- *   get:
- *     summary: Retorna os 5 últimos livros cadastrados
- *     responses:
- *       200:
- *         description: Lista dos livros mais recentes
- */
-app.get('/livros/recentes/ultimos', (req, res) => {
-  const livrosRecentes = livros
-    .sort((a, b) => new Date(b.dataCadastro) - new Date(a.dataCadastro))
-    .slice(0, 5);
-  res.json(livrosRecentes);
-});
 
 /**
  * @swagger
@@ -326,16 +341,22 @@ app.get('/livros/recentes/ultimos', (req, res) => {
  *       200:
  *         description: Estatísticas retornadas com sucesso
  */
-app.get('/estatisticas', (req, res) => {
-  const totalLivros = livros.length;
-  const totalPaginas = livros.reduce((acc, livro) => acc + livro.paginas, 0);
-  const totalUsuarios = usuarios.length;
-  
-  res.json({
-    totalLivros,
-    totalPaginas,
-    totalUsuarios
-  });
+app.get('/estatisticas', async (req, res, next) => {
+  try {
+    const [[livrosRow]] = await pool.query(
+      'SELECT COUNT(*) AS totalLivros, COALESCE(SUM(paginas), 0) AS totalPaginas FROM livros'
+    );
+    const [[usuariosRow]] = await pool.query(
+      'SELECT COUNT(*) AS totalUsuarios FROM usuarios'
+    );
+    res.json({
+      totalLivros: Number(livrosRow.totalLivros),
+      totalPaginas: Number(livrosRow.totalPaginas),
+      totalUsuarios: Number(usuariosRow.totalUsuarios)
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ==================== ROTAS DE FAVORITOS ====================
@@ -355,14 +376,20 @@ app.get('/estatisticas', (req, res) => {
  *       200:
  *         description: Lista de favoritos retornada
  */
-app.get('/favoritos/:usuarioId', (req, res) => {
-  const usuarioId = parseInt(req.params.usuarioId);
-  const favoritosUsuario = favoritos
-    .filter(f => f.usuarioId === usuarioId)
-    .map(f => livros.find(l => l.id === f.livroId))
-    .filter(livro => livro !== undefined);
-  
-  res.json(favoritosUsuario);
+app.get('/favoritos/:usuarioId', async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT l.id, l.nome, l.autor, l.paginas, l.descricao,
+              l.imagem_url AS imagemUrl, l.data_cadastro AS dataCadastro
+       FROM livros l
+       JOIN favoritos f ON f.livro_id = l.id
+       WHERE f.usuario_id = ?`,
+      [parseInt(req.params.usuarioId)]
+    );
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
@@ -385,20 +412,20 @@ app.get('/favoritos/:usuarioId', (req, res) => {
  *       201:
  *         description: Livro favoritado com sucesso
  */
-app.post('/favoritos', (req, res) => {
-  const { usuarioId, livroId } = req.body;
-  
-  // Verifica se já está favoritado
-  const jaFavoritado = favoritos.find(
-    f => f.usuarioId === usuarioId && f.livroId === livroId
-  );
-  
-  if (jaFavoritado) {
-    return res.status(400).json({ mensagem: 'Livro já está nos favoritos' });
+app.post('/favoritos', async (req, res, next) => {
+  try {
+    const { usuarioId, livroId } = req.body;
+    await pool.query(
+      'INSERT INTO favoritos (usuario_id, livro_id) VALUES (?, ?)',
+      [usuarioId, livroId]
+    );
+    res.status(201).json({ mensagem: 'Livro adicionado aos favoritos' });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ mensagem: 'Livro já está nos favoritos' });
+    }
+    next(err);
   }
-  
-  favoritos.push({ usuarioId, livroId });
-  res.status(201).json({ mensagem: 'Livro adicionado aos favoritos' });
 });
 
 /**
@@ -421,19 +448,26 @@ app.post('/favoritos', (req, res) => {
  *       200:
  *         description: Livro removido dos favoritos
  */
-app.delete('/favoritos', (req, res) => {
-  const { usuarioId, livroId } = req.body;
-  
-  const index = favoritos.findIndex(
-    f => f.usuarioId === usuarioId && f.livroId === livroId
-  );
-  
-  if (index === -1) {
-    return res.status(404).json({ mensagem: 'Favorito não encontrado' });
+app.delete('/favoritos', async (req, res, next) => {
+  try {
+    const { usuarioId, livroId } = req.body;
+    const [result] = await pool.query(
+      'DELETE FROM favoritos WHERE usuario_id = ? AND livro_id = ?',
+      [usuarioId, livroId]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ mensagem: 'Favorito não encontrado' });
+    }
+    res.json({ mensagem: 'Livro removido dos favoritos' });
+  } catch (err) {
+    next(err);
   }
-  
-  favoritos.splice(index, 1);
-  res.json({ mensagem: 'Livro removido dos favoritos' });
+});
+
+// Error handler genérico
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ mensagem: 'Erro interno do servidor' });
 });
 
 app.listen(PORT, () => {

@@ -7,7 +7,7 @@ formLogin.addEventListener('submit', async (e) => {
   const senha = document.getElementById('senha').value;
   
   try {
-    const response = await fetch('http://localhost:3000/login', {
+    const response = await fetch(`${window.API_BASE_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, senha })

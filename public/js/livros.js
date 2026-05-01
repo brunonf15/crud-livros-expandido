@@ -22,7 +22,7 @@ formAdicionar.addEventListener('submit', async (e) => {
   const imagemUrl = document.getElementById('imagemUrl').value;
   
   try {
-    const response = await fetch('http://localhost:3000/livros', {
+    const response = await fetch(`${window.API_BASE_URL}/livros`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, autor, paginas, descricao, imagemUrl })
@@ -42,7 +42,7 @@ formAdicionar.addEventListener('submit', async (e) => {
 
 async function carregarLivros() {
   try {
-    const response = await fetch('http://localhost:3000/livros');
+    const response = await fetch(`${window.API_BASE_URL}/livros`);
     const livros = await response.json();
     
     const container = document.getElementById('lista-livros');

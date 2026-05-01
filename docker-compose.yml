@@ -1,0 +1,35 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: crudlivros_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_Handsontest123
+      MYSQL_DATABASE: u446007675_handsontest
+      MYSQL_USER: u446007675_handsontest
+      MYSQL_PASSWORD: Handsontest123
+    ports:
+      - '3307:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./sql/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    command:
+      - --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-proot_Handsontest123']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  adminer:
+    image: adminer:latest
+    container_name: crudlivros_adminer
+    restart: unless-stopped
+    ports:
+      - '8082:8080'
+    depends_on:
+      - db
+
+volumes:
+  mysql_data:
