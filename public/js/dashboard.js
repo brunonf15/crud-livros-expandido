@@ -14,7 +14,7 @@ function logout() {
 // Carrega estatísticas
 async function carregarEstatisticas() {
   try {
-    const response = await fetch(`${window.API_BASE_URL}/estatisticas`);
+    const response = await fetch('/estatisticas');
     const stats = await response.json();
     
     document.getElementById('stats').innerHTML = `
@@ -39,7 +39,7 @@ async function carregarEstatisticas() {
 // Carrega livros recentes
 async function carregarLivrosRecentes() {
   try {
-    const response = await fetch(`${window.API_BASE_URL}/livros/recentes/ultimos`);
+    const response = await fetch('/livros/recentes/ultimos');
     const livros = await response.json();
     
     const container = document.getElementById('livros-recentes');

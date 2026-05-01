@@ -13,7 +13,7 @@ formAdicionar.addEventListener('submit', (e) => {
   const autor = document.getElementById('autor').value;
   const paginas = document.getElementById('paginas').value;
 
-  fetch(`${window.API_BASE_URL}/livros`, {
+  fetch('/livros', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nome, autor, paginas })
@@ -27,7 +27,7 @@ formAdicionar.addEventListener('submit', (e) => {
 
 // Listar todos os livros
 btnListar.addEventListener('click', () => {
-  fetch(`${window.API_BASE_URL}/livros`)
+  fetch('/livros')
   .then(res => res.json())
   .then(data => {
     listaLivros.innerHTML = '';
@@ -42,7 +42,7 @@ btnListar.addEventListener('click', () => {
 // Buscar livro por ID
 btnBuscar.addEventListener('click', () => {
   const id = idBuscar.value;
-  fetch(`${window.API_BASE_URL}/livros/${id}`)
+  fetch(`/livros/${id}`)
   .then(res => res.json())
   .then(data => {
     if (data.mensagem) {

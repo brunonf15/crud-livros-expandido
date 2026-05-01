@@ -14,7 +14,7 @@ formRegistro.addEventListener('submit', async (e) => {
   }
   
   try {
-    const response = await fetch(`${window.API_BASE_URL}/registro`, {
+    const response = await fetch('/registro', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, email, senha })

@@ -15,11 +15,11 @@ const livroId = urlParams.get('id');
 
 async function carregarDetalhes() {
   try {
-    const response = await fetch(`${window.API_BASE_URL}/livros/${livroId}`);
+    const response = await fetch(`/livros/${livroId}`);
     const livro = await response.json();
     
     // Verifica se está favoritado
-    const favoritosResponse = await fetch(`${window.API_BASE_URL}/favoritos/${usuario.id}`);
+    const favoritosResponse = await fetch(`/favoritos/${usuario.id}`);
     const favoritos = await favoritosResponse.json();
     const isFavorito = favoritos.some(f => f.id === livro.id);
     
@@ -65,7 +65,7 @@ async function carregarDetalhes() {
 
 async function toggleFavorito(livroId, isFavorito) {
   try {
-    const url = `${window.API_BASE_URL}/favoritos`;
+    const url = '/favoritos';
     const method = isFavorito ? 'DELETE' : 'POST';
     
     const response = await fetch(url, {
@@ -89,7 +89,7 @@ async function deletarLivro(livroId) {
   }
   
   try {
-    const response = await fetch(`${window.API_BASE_URL}/livros/${livroId}`, {
+    const response = await fetch(`/livros/${livroId}`, {
       method: 'DELETE'
     });
     
