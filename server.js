@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const pool = require('./db');
+const resetDatabase = require('./scripts/reset');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -473,4 +474,10 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}/login.html`);
   console.log(`Documentação Swagger: http://localhost:${PORT}/api-docs`);
+
+  const RESET_INTERVAL_MS = 60 * 60 * 1000;
+  setInterval(() => {
+    resetDatabase().catch((err) => console.error('[reset] Falhou:', err));
+  }, RESET_INTERVAL_MS);
+  console.log('Reset automático agendado a cada 1 hora');
 });

@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node -r dotenv/config server.js dotenv_config_path=.env.local",
-    "start:prod": "node -r dotenv/config server.js dotenv_config_path=.env.production"
+    "start:prod": "node -r dotenv/config server.js dotenv_config_path=.env.production",
+    "reset": "node scripts/reset.js"
   },
   "keywords": [],
   "author": "Bruno Figueiredo - Mestre QA",
